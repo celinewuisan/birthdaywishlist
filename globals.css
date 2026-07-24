@@ -1,0 +1,176 @@
+"use client";
+
+import { useState } from "react";
+import clsx from "clsx";
+import { resolveTotalBudget } from "@/lib/recommend";
+
+export type FinderState = {
+  active: boolean;
+  isGroup: boolean;
+  groupSize: number;
+  budgetType: "PER_PERSON" | "TOTAL";
+  amount: number;
+  happinessGoal: "" | "HAPPY" | "OMG_EXCITED" | "CHANGED_MY_LIFE";
+  totalBudget: number;
+};
+
+const DEFAULT: FinderState = {
+  active: false,
+  isGroup: false,
+  groupSize: 3,
+  budgetType: "TOTAL",
+  amount: 200000,
+  happinessGoal: "",
+  totalBudget: 200000,
+};
+
+export default function GiftFinder({ onChange }: { onChange: (s: FinderState) => void }) {
+  const [state, setState] = useState<FinderState>(DEFAULT);
+
+  function update(patch: Partial<FinderState>) {
+    const merged = { ...state, ...patch, active: true };
+    merged.totalBudget = resolveTotalBudget({
+      isGroup: merged.isGroup,
+      groupSize: merged.groupSize,
+      budgetType: merged.budgetType,
+      amount: merged.amount,
+    });
+    setState(merged);
+    onChange(merged);
+  }
+
+  function clear() {
+    setState(DEFAULT);
+    onChange(DEFAULT);
+  }
+
+  return (
+    <div className="card p-5 sm:p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-display text-lg font-semibold">find something that fits</h2>
+        {state.active && (
+          <button onClick={clear} className="text-xs font-medium text-ink/50 underline dark:text-cream/50">
+            clear
+          </button>
+        )}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50 dark:text-cream/50">
+            who's buying?
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => update({ isGroup: false })}
+              className={clsx("btn flex-1", !state.isGroup ? "btn-primary" : "btn-secondary")}
+            >
+              Just me
+            </button>
+            <button
+              onClick={() => update({ isGroup: true })}
+              className={clsx("btn flex-1", state.isGroup ? "btn-primary" : "btn-secondary")}
+            >
+              Patungan
+            </button>
+          </div>
+        </div>
+
+        {state.isGroup && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50 dark:text-cream/50">
+              how many people?
+            </label>
+            <input
+              type="number"
+              min={2}
+              max={20}
+              value={state.groupSize}
+              onChange={(e) => update({ groupSize: Number(e.target.value) })}
+              className="input"
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50 dark:text-cream/50">
+            {state.isGroup ? "budget is..." : "budget"}
+          </label>
+          {state.isGroup ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => update({ budgetType: "PER_PERSON" })}
+                className={clsx("btn flex-1", state.budgetType === "PER_PERSON" ? "btn-primary" : "btn-secondary")}
+              >
+                Per person
+              </button>
+              <button
+                onClick={() => update({ budgetType: "TOTAL" })}
+                className={clsx("btn flex-1", state.budgetType === "TOTAL" ? "btn-primary" : "btn-secondary")}
+              >
+                Overall
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2 text-xs text-ink/40 dark:text-cream/40">total you want to spend</div>
+          )}
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="mb-1.5 flex justify-between text-xs font-semibold uppercase tracking-wide text-ink/50 dark:text-cream/50">
+            <span>
+              {state.isGroup && state.budgetType === "PER_PERSON" ? "amount per person" : "amount"}
+            </span>
+            <span className="font-mono normal-case text-ink dark:text-cream">
+              Rp{state.amount.toLocaleString("id-ID")}
+            </span>
+          </label>
+          <input
+            type="range"
+            min={50000}
+            max={4000000}
+            step={10000}
+            value={state.amount}
+            onChange={(e) => update({ amount: Number(e.target.value) })}
+            className="w-full accent-indigo-500"
+          />
+          <div className="flex justify-between text-[11px] text-ink/40 dark:text-cream/40">
+            <span>Rp50.000</span>
+            <span>Rp4.000.000</span>
+          </div>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50 dark:text-cream/50">
+            how happy do you want me to be? (optional)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "", label: "Any level" },
+              { key: "HAPPY", label: "Happy!" },
+              { key: "OMG_EXCITED", label: "OMG SO EXCITED" },
+              { key: "CHANGED_MY_LIFE", label: "You Changed My Life" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => update({ happinessGoal: opt.key as FinderState["happinessGoal"] })}
+                className={clsx(
+                  "btn text-xs",
+                  state.happinessGoal === opt.key ? "btn-primary" : "btn-secondary"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {state.isGroup && (
+        <p className="mt-4 text-xs text-ink/50 dark:text-cream/50">
+          that's a total budget of <span className="font-mono font-semibold text-ink dark:text-cream">Rp{state.totalBudget.toLocaleString("id-ID")}</span> across {state.groupSize} people
+        </p>
+      )}
+    </div>
+  );
+}

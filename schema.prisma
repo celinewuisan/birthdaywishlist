@@ -1,0 +1,125 @@
+import { PrismaClient, HappinessLevel } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+const placeholderGifts = [
+  {
+    name: "Placeholder: Nice Candle",
+    description:
+      "Swap me out! This is a placeholder gift so you can see how the card looks. Add the real thing from /admin.",
+    imageUrl: "https://images.unsplash.com/photo-1602523961358-f9f03dd93038?w=800",
+    price: 85000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.HAPPY,
+    category: "Home",
+    quantityAvailable: 1,
+  },
+  {
+    name: "Placeholder: Wireless Earbuds",
+    description:
+      "A mid-range placeholder item. Great for showing off the 'group claim' flow since it's a bit pricier.",
+    imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
+    price: 950000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.OMG_EXCITED,
+    category: "Tech",
+    quantityAvailable: 3,
+  },
+  {
+    name: "Placeholder: Nice Watch",
+    description: "A big-ticket placeholder. Good for testing 'patungan' with several friends chipping in.",
+    imageUrl: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800",
+    price: 3200000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.CHANGED_MY_LIFE,
+    category: "Fashion",
+    quantityAvailable: 1,
+  },
+  {
+    name: "Placeholder: Cool Tote Bag",
+    description: "A cheap-and-cheerful placeholder near the bottom of the budget range.",
+    imageUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800",
+    price: 120000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.HAPPY,
+    category: "Fashion",
+    quantityAvailable: 5,
+  },
+  {
+    name: "Placeholder: Fancy Dinner Voucher",
+    description: "An experience-type placeholder gift, priced for a small group to split.",
+    imageUrl: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+    price: 600000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.OMG_EXCITED,
+    category: "Experiences",
+    quantityAvailable: 2,
+  },
+  {
+    name: "Placeholder: Nice Notebook Set",
+    description: "A cute, cheap placeholder near the very bottom of the range.",
+    imageUrl: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=800",
+    price: 55000,
+    purchaseLink: "https://example.com",
+    happinessLevel: HappinessLevel.HAPPY,
+    category: "Misc",
+    quantityAvailable: 4,
+  },
+];
+
+const defaultContent: Record<string, string> = {
+  homepage_title: "okay so it's my birthday",
+  homepage_subtitle:
+    "here's a list of stuff that would make me stupidly happy. pick your budget, claim something, done. no pressure, no guilt trips, just gifts.",
+  intro_message:
+    "Hi! Thanks for even opening this link, ngl you didn't have to. Everything here is stuff I actually want, tagged by how happy it'd make me. If a few of you want to team up on something bigger, one person can claim it \"as a group\" for everyone. You'll see what's already claimed, but not who claimed it \u2014 that part's between me and my spreadsheet.",
+  faq: JSON.stringify([
+    {
+      q: "Do I need to spend a lot?",
+      a: "No! There's stuff from Rp50.000 up. Get whatever fits your budget, that's the whole point of the range.",
+    },
+    {
+      q: "What's 'patungan' / group claim?",
+      a: "If a gift is a bit pricier, one of you can claim it \"as a group\" and represent everyone chipping in. You don't need to add everyone's names, just yours.",
+    },
+    {
+      q: "Can other people see I claimed something?",
+      a: "They'll see the gift is claimed, but not by who. It's a secret between you and me (and my passcode-locked admin page).",
+    },
+    {
+      q: "What if two of us want the same gift?",
+      a: "Some gifts have more than one slot open, check the counter on the card. If it says 0 left, it's taken, sorry.",
+    },
+    {
+      q: "I bought it somewhere else / a different color, is that ok?",
+      a: "Totally fine, the link is just a suggestion. Get whatever version you want.",
+    },
+  ]),
+};
+
+async function main() {
+  console.log("Seeding gifts...");
+  for (const gift of placeholderGifts) {
+    await prisma.gift.create({ data: gift });
+  }
+
+  console.log("Seeding site content...");
+  for (const [key, value] of Object.entries(defaultContent)) {
+    await prisma.siteContent.upsert({
+      where: { key },
+      update: {},
+      create: { key, value },
+    });
+  }
+
+  console.log("Done.");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
